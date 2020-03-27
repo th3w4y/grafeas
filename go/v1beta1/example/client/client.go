@@ -16,6 +16,8 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"log"
 
 	"time"
@@ -283,46 +285,51 @@ func main() {
 
 	// now create a build occurrence
 	log.Println("create a build occurrence")
-	build := buildpb.Details{
-		Provenance: &provpb.BuildProvenance{
-			Id:        "build identifier",
-			ProjectId: "some project identifier",
-			Commands:  []*provpb.Command{},
-			BuiltArtifacts: []*provpb.Artifact{
-				&provpb.Artifact{
-					Checksum: "123",
-					Id:       "some identifier for the artifact",
-					Names: []string{
-						"name of the related artifact",
-					},
+
+	buildProvenance := &provpb.BuildProvenance{
+		Id:        "build identifier",
+		ProjectId: "some project identifier",
+		Commands:  []*provpb.Command{},
+		BuiltArtifacts: []*provpb.Artifact{
+			&provpb.Artifact{
+				Checksum: "123",
+				Id:       "some identifier for the artifact",
+				Names: []string{
+					"name of the related artifact",
 				},
 			},
-			CreateTime: &timestamp.Timestamp{
-				Seconds: time.Now().UTC().UnixNano(),
-			},
-			StartTime: &timestamp.Timestamp{
-				Seconds: time.Now().UTC().UnixNano(),
-			},
-			EndTime: &timestamp.Timestamp{
-				Seconds: time.Now().UTC().UnixNano(),
-			},
-			Creator: "User initiating the build",
-			LogsUri: "location of the build logs",
-			SourceProvenance: &provpb.Source{
-				ArtifactStorageSourceUri: "input binary artifacts from this build",
-				Context: &sourcepb.SourceContext{
-					Context: &sourcepb.SourceContext_Git{
-						Git: &sourcepb.GitSourceContext{
-							Url:        "the git repo url",
-							RevisionId: "git commit hash",
-						},
-					},
-				},
-			},
-			TriggerId:      "triggered by code commit 123",
-			BuilderVersion: "some version of the builder",
 		},
-		ProvenanceBytes: "Z3JhZmVhcw==",
+		CreateTime: &timestamp.Timestamp{
+			Seconds: time.Now().UTC().UnixNano(),
+		},
+		StartTime: &timestamp.Timestamp{
+			Seconds: time.Now().UTC().UnixNano(),
+		},
+		EndTime: &timestamp.Timestamp{
+			Seconds: time.Now().UTC().UnixNano(),
+		},
+		Creator: "User initiating the build",
+		LogsUri: "location of the build logs",
+		SourceProvenance: &provpb.Source{
+			ArtifactStorageSourceUri: "input binary artifacts from this build",
+			Context: &sourcepb.SourceContext{
+				Context: &sourcepb.SourceContext_Git{
+					Git: &sourcepb.GitSourceContext{
+						Url:        "the git repo url",
+						RevisionId: "git commit hash",
+					},
+				},
+			},
+		},
+		TriggerId:      "triggered by code commit 123",
+		BuilderVersion: "some version of the builder",
+	}
+	buildProvenanceBytes, _ := json.Marshal(buildProvenance)
+	encodedbuildProvenanceBytes := base64.StdEncoding.EncodeToString(buildProvenanceBytes)
+
+	build := buildpb.Details{
+		Provenance:      buildProvenance,
+		ProvenanceBytes: encodedbuildProvenanceBytes,
 	}
 	occurrenceBuildDetails := pb.Occurrence_Build{
 		Build: &build,
